@@ -11,6 +11,8 @@ import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.util.TypedValue
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.widget.HorizontalScrollView
 import kotlin.properties.Delegates
@@ -49,6 +51,8 @@ class StatusView @JvmOverloads constructor(
         const val INVALID_STATUS_COUNT = -1
     }
 
+    private var gestureCallback: GestureDetector.SimpleOnGestureListener
+    private var gestureTouchHandler: GestureDetector
     /**
      * Circle stroke paints for incomplete & complete status
      */
@@ -105,7 +109,7 @@ class StatusView @JvmOverloads constructor(
     /*
     The count up to  which status has been completed
     */
-    var currentCount: Int by OnLayoutProp(INVALID_STATUS_COUNT){
+    var currentCount: Int by OnLayoutProp(INVALID_STATUS_COUNT) {
         initCirclePaints()
     }
 
@@ -407,18 +411,26 @@ class StatusView @JvmOverloads constructor(
     private class DrawableItem(val rect: Rect, val drawable: Drawable)
 
     //Stores information about every status text and its dimension properties
-    private class StatusInfo(val text: String, var width: Float = 0.0f, var height: Float = 0.0f, var staticLayout: StaticLayout? = null)
+    class StatusInfo(val text: String, var width: Float = 0.0f, var height: Float = 0.0f, var staticLayout: StaticLayout? = null)
 
     private var propsIntialisedOnce = false
 
     init {
-
         id = ViewCompat.generateViewId()//as the same attrs are being passed this view would have the same id as scroller.
+        gestureCallback = object : GestureDetector.SimpleOnGestureListener() {
+            override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+                handleSingleTap(e)
+                return super.onSingleTapConfirmed(e)
+            }
 
+            override fun onDown(e: MotionEvent?): Boolean {
+                return true
+            }
+        }
+        gestureTouchHandler = GestureDetector(getContext(), gestureCallback)
         val a = context.theme.obtainStyledAttributes(attrs, R.styleable.StatusViewScroller, 0, 0)
 
         try {
-
             stepCount = a.getInt(R.styleable.StatusViewScroller_stepCount, stepCount)
             currentCount = a.getInt(R.styleable.StatusViewScroller_currentCount, INVALID_STATUS_COUNT)
             circleRadius = a.getDimension(R.styleable.StatusViewScroller_circleRadius, circleRadius)
@@ -481,19 +493,16 @@ class StatusView @JvmOverloads constructor(
         } finally {
             a.recycle()
         }
+        initViewDrawingData()
+    }
 
-
-
+    private fun initViewDrawingData() {
 
         initCirclePaints()
-
-
         mLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
         mLinePaint.style = Paint.Style.STROKE
         mLinePaint.strokeWidth = lineWidth
         mLinePaint.color = lineColor
-
-
         mTextPaintStatus = TextPaint(Paint.ANTI_ALIAS_FLAG)
         mTextPaintStatus.style = Paint.Style.FILL
         mTextPaintStatus.textAlign = Paint.Align.CENTER
@@ -529,6 +538,50 @@ class StatusView @JvmOverloads constructor(
         }
 
         propsIntialisedOnce = true
+    }
+
+    fun setSelectedItem(index: Int) {
+        currentCount = if (index <= stepCount) index else currentCount
+        invalidate()
+    }
+
+    private fun handleSingleTap(e: MotionEvent?) {
+        if (isClickable) {
+            e?.let {
+                val x = e.x
+                val y = e.y
+                var clickedOnItem = -1
+                for (index in 0.until(drawingData.size)) {
+                    val circleItem = drawingData[index].circleItem
+                    val dx = Math.abs(x - circleItem.center.x)
+                    val dy = Math.abs(y - circleItem.center.y)
+                    val dist = Math.sqrt((dx * dx + dy * dy).toDouble())
+                    if (dist <= currentStatusRadius) {
+                        clickedOnItem = index
+                        break
+                    }
+                }
+                currentCount = if (clickedOnItem >= 0) clickedOnItem + 1 else currentCount
+                invalidate()
+            }
+        }
+    }
+
+    fun setStatusItems(items: List<String>) {
+        statusData.clear()
+        drawingData.clear()
+        items.forEach {
+            statusData.add(StatusInfo(it))
+        }
+        stepCount = items.size
+        setDrawingDimensions()
+        initViewDrawingData()
+
+        invalidate()
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        return gestureTouchHandler.onTouchEvent(event)
     }
 
     private fun initCirclePaints() {
@@ -1128,6 +1181,7 @@ class StatusView @JvmOverloads constructor(
 
     }
 
+
     private fun Float.pxValue(unit: Int = TypedValue.COMPLEX_UNIT_DIP): Float {
         return TypedValue.applyDimension(unit, this, resources.displayMetrics)
     }
@@ -1140,5 +1194,6 @@ class StatusView @JvmOverloads constructor(
             0
         }
     }
+
 
 }

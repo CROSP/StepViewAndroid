@@ -14,7 +14,20 @@ class MainActivity : AppCompatActivity() {
             currentCount = 2
             circleFillColorCurrent = Color.RED
         }
+/*
 
+        statusViewScroller.postDelayed({
+            statusViewScroller.statusView.setSelectedItem(3)
+        }, 4000)
+*/
+
+        statusViewScroller.postDelayed({
+            val statuses = mutableListOf<String>()
+            statuses.add("First")
+            statuses.add("Second")
+            statuses.add("Third")
+            statusViewScroller.statusView.setStatusItems(statuses)
+        }, 4000)
 
     }
 

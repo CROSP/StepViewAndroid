@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 ext {
     bintrayRepo = 'maven'
     bintrayName = 'StepViewAndroid'
-
+    kotlin_version = '1.3.10'
     publishedGroupId = 'com.params.stepview'
     libraryName = 'stepView'
     artifact = 'stepview'
@@ -48,7 +48,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "com.android.support:appcompat-v7:$versions.supportLibrary"
-    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin_version"
+    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.30"
 }
 
 tasks.withType(Javadoc) {
