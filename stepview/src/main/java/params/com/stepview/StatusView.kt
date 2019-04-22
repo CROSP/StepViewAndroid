@@ -10,6 +10,7 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.AttributeSet
+import android.util.Log
 import android.util.TypedValue
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -51,6 +52,7 @@ class StatusView @JvmOverloads constructor(
         const val INVALID_STATUS_COUNT = -1
     }
 
+    private var statusColors: MutableList<Int> = mutableListOf()
     var selectionCallback: SelectionCallback? = null
     private var gestureCallback: GestureDetector.SimpleOnGestureListener
     private var gestureTouchHandler: GestureDetector
@@ -547,6 +549,8 @@ class StatusView @JvmOverloads constructor(
         invalidate()
     }
 
+    public class StatusInfoItem(val text: String? = "", val fillColor: Int? = -1)
+
     private fun handleSingleTap(e: MotionEvent?) {
         if (isClickable) {
             e?.let {
@@ -570,11 +574,13 @@ class StatusView @JvmOverloads constructor(
         }
     }
 
-    fun setStatusItems(items: List<String>, selectedItemPosition: Int) {
+    fun setStatusItems(items: List<StatusInfoItem>, selectedItemPosition: Int) {
         statusData.clear()
+        statusColors = mutableListOf()
         drawingData.clear()
         items.forEach {
-            statusData.add(StatusInfo(it))
+            statusColors.add(it.fillColor ?: circleFillColor)
+            statusData.add(StatusInfo(it.text ?: ""))
         }
         stepCount = items.size
         setDrawingDimensions()
@@ -814,9 +820,11 @@ class StatusView @JvmOverloads constructor(
                 itemDrawable = incompleteDrawable
 
             } else {
-
                 circleStrokePaint = this.mCircleStrokePaint
-                circleFillPaint = this.mCircleFillPaint
+                val circleFillColor = if (statusColors.size > pos) statusColors[pos] else circleFillColor
+                val itemFillPaint = Paint(mCircleFillPaint)
+                itemFillPaint.color = circleFillColor
+                circleFillPaint = itemFillPaint
                 textPaintLabel = this.mTextPaintLabels
                 linePaint = this.mLinePaint
                 itemDrawable = completeDrawable

@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
+import params.com.stepview.StatusView
 import params.com.stepview.StatusView.SelectionCallback
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,10 +31,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
         statusViewScroller.postDelayed({
-            val statuses = mutableListOf<String>()
-            statuses.add("First")
-            statuses.add("Second")
-            statuses.add("Third")
+            val statuses = mutableListOf<StatusView.StatusInfoItem>()
+            for (index in 1..25) {
+                val rnd = Random()
+                val color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256))
+                statuses.add(StatusView.StatusInfoItem("#$index", color))
+            }
             statusViewScroller.statusView.setStatusItems(statuses, 1)
         }, 4000)
 
