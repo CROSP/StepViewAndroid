@@ -51,6 +51,7 @@ class StatusView @JvmOverloads constructor(
         const val INVALID_STATUS_COUNT = -1
     }
 
+    var selectionCallback: SelectionCallback? = null
     private var gestureCallback: GestureDetector.SimpleOnGestureListener
     private var gestureTouchHandler: GestureDetector
     /**
@@ -542,6 +543,7 @@ class StatusView @JvmOverloads constructor(
 
     fun setSelectedItem(index: Int) {
         currentCount = if (index <= stepCount) index else currentCount
+        selectionCallback?.onStatusItemSelected(currentCount, statusData[currentCount].text)
         invalidate()
     }
 
@@ -558,6 +560,7 @@ class StatusView @JvmOverloads constructor(
                     val dist = Math.sqrt((dx * dx + dy * dy).toDouble())
                     if (dist <= currentStatusRadius) {
                         clickedOnItem = index
+                        selectionCallback?.onStatusItemSelected(clickedOnItem, statusData[clickedOnItem].text)
                         break
                     }
                 }
@@ -567,7 +570,7 @@ class StatusView @JvmOverloads constructor(
         }
     }
 
-    fun setStatusItems(items: List<String>) {
+    fun setStatusItems(items: List<String>, selectedItemPosition: Int) {
         statusData.clear()
         drawingData.clear()
         items.forEach {
@@ -576,7 +579,7 @@ class StatusView @JvmOverloads constructor(
         stepCount = items.size
         setDrawingDimensions()
         initViewDrawingData()
-
+        currentCount = selectedItemPosition
         invalidate()
     }
 
@@ -1181,6 +1184,9 @@ class StatusView @JvmOverloads constructor(
 
     }
 
+    interface SelectionCallback {
+        fun onStatusItemSelected(position: Int, label: String)
+    }
 
     private fun Float.pxValue(unit: Int = TypedValue.COMPLEX_UNIT_DIP): Float {
         return TypedValue.applyDimension(unit, this, resources.displayMetrics)
